@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: postgres_container
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    ports:
+      - "${EXT_DB_PORT}:${DB_PORT}"
+    volumes:
+      - data:/var/lib/postgresql/data
+      - ./sql_scripts:/docker-entrypoint-initdb.d
+  app:
+    build:
+      dockerfile: Dockerfile
+    image: pvz:latest
+    container_name: pvz_app
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - SECRET_KEY=${SECRET_KEY}
+      - CFG_FILEPATH=${CFG_FILEPATH}
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  data:

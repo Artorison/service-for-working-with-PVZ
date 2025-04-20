@@ -1,0 +1,1 @@
+TRUNCATE TABLE products, receptions, pvz, users RESTART IDENTITY CASCADE;

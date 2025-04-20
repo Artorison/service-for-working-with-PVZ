@@ -1,0 +1,35 @@
+services:
+  db_test:
+    image: postgres:latest
+    container_name: postgres_test
+    environment:
+      POSTGRES_DB: test_database
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: 123
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d test_database"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    ports:
+      - "5555:5432"
+    volumes:
+      - ../sql_scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+  app_test:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    image: pvz:latest
+    container_name: pvz_app_test
+    environment:
+      - DB_HOST=db_test
+      - DB_PORT=5432
+      - DB_USER=test_user
+      - DB_PASSWORD=123
+      - DB_NAME=test_database
+      - SECRET_KEY="secret"
+    ports:
+      - "8081:8080"
+    depends_on:
+      db_test:
+        condition: service_healthy
